@@ -3,34 +3,46 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { Icon } from 'react-native-elements';
 import realm from '../../store/realm';
 
-const saveNote = (newNote) => {
-    const allData = realm.objects('Note');
-    const dataLength = allData.length;
-    let lastIdFromRealm = 0;
-
-    if (dataLength !== 0) {
-        lastIdFromRealm = allData[dataLength - 1].id;
-    }
-
-    if (newNote !== '') {
-        realm.write(() => {
-            realm.create("Note", {
-                id: dataLength === 0 ? 1 : lastIdFromRealm + 1,
-                note: newNote,
-                date: new Date().toISOString()
-            });
-        });
-        alert('Successfully save your note!');
-        const data = realm.objects('Note');
-        console.log(data);
-    } else {
-        alert('Empty note!');
-    }
-};
-
 const AddNoteScreen = (props) => {
     const { navigation } = props;
     const [tempNote, setTempNote] = useState('');
+
+    const saveNote = (newNote) => {
+        const allData = realm.objects('Note');
+        const dataLength = allData.length;
+        let lastIdFromRealm = 0;
+    
+        if (dataLength !== 0) {
+            lastIdFromRealm = allData[dataLength - 1].id;
+        }
+    
+        if (newNote !== '') {
+            realm.write(() => {
+                realm.create("Note", {
+                    id: dataLength === 0 ? 1 : lastIdFromRealm + 1,
+                    note: newNote,
+                    date: new Date().toISOString()
+                });
+            });
+
+            // alert('Successfully save your note!');
+            navigation.navigate('NoteList')
+            const data = realm.objects('Note');
+            console.log(data);
+        } else {
+            alert('Empty note!');
+        }
+    };
+
+    const getCurrentDate = () => {
+        const months = ["January", "February", "March", "April", "May", "June", 
+                        "July", "August", "September", "October", "November", "December"];
+        const currentDate = new Date();
+        const dateOnly = currentDate.getDate();
+        const monthOnly = currentDate.getMonth();
+        const yearOnly = currentDate.getFullYear();
+        return months[monthOnly] + ' ' + dateOnly + ', ' + yearOnly;
+    };
 
     return (
         <View style={styles.mainContainer}>
@@ -47,7 +59,7 @@ const AddNoteScreen = (props) => {
                     />
                 </TouchableOpacity>
             </View>
-            <Text style={styles.date}>Date</Text>
+            <Text style={styles.date}>{getCurrentDate()}</Text>
             <TextInput
                 multiline
                 placeholder="Write here"
