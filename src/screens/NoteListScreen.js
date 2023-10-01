@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput } from 'react-native';
 import { Icon } from 'react-native-elements';
 import AddNoteScreen from './AddNoteScreen';
 import realm from '../../store/realm';
@@ -7,10 +7,11 @@ import realm from '../../store/realm';
 const NoteListScreen = (props) => {
     const { navigation } = props;
     const [data, setData] = useState([]);
+    const [searchText, setSearchText] = useState('');
 
     const dateFormat = (date) => {
-        const months = ["January", "February", "March", "April", "May", "June", 
-                        "July", "August", "September", "October", "November", "December"];
+        const months = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
         const noteDate = new Date(date);
         const dateOnly = noteDate.getDate();
         const monthOnly = noteDate.getMonth();
@@ -18,11 +19,23 @@ const NoteListScreen = (props) => {
         return months[monthOnly] + ' ' + dateOnly + ', ' + yearOnly;
     };
 
+    const searchData = (value) => {
+        const dataFromDatabase = realm.objects('Note').sorted('date', true);
+        const searchedData = dataFromDatabase.filter((item) => {
+            const itemData = item.note.toLowerCase();
+            const valueData = value.toLowerCase()
+            return itemData.indexOf(valueData) > -1;
+        });
+        setData(searchedData);
+        setSearchText(value);
+    };
+
     useEffect(() => {
         const noteListPage = navigation.addListener('focus', () => {
             const notes = realm.objects('Note');
             const notesByDate = notes.sorted('date', true)
             setData(notesByDate);
+            setSearchText('');
         });
 
         return noteListPage;
@@ -41,6 +54,7 @@ const NoteListScreen = (props) => {
                 data={data}
                 keyExtractor={(item) => item.id}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps={'handled'}
                 renderItem={({ item }) => {
                     return (
                         <View style={styles.mainDataContainer}>
@@ -60,6 +74,28 @@ const NoteListScreen = (props) => {
                         </View>
                     )
                 }}
+                ListHeaderComponent={
+                    <View style={styles.searchBox}>
+                        <Icon
+                            name="search"
+                            type="font-awesome"
+                            size={18}
+                            style={styles.searchIcon}
+                            color="grey"
+                        />
+                        <TextInput
+                            placeholder='Search here'
+                            style={styles.searchInput}
+                            onChangeText={(text) => searchData(text)}
+                            value={searchText}
+                        />
+                    </View>
+                }
+                ListEmptyComponent={
+                    <View style={{alignItems:'center', margin:8}}>
+                        <Text>No items.</Text>
+                    </View>
+                }
             />
 
             <View style={styles.buttonContainer}>
@@ -130,6 +166,23 @@ const styles = StyleSheet.create({
     },
     dateText: {
         fontSize: 12
+    },
+    searchBox: {
+        flexDirection: 'row',
+        borderWidth: 1,
+        margin: 8,
+        borderRadius: 10,
+        flex: 1,
+        alignItems: 'center'
+    },
+    searchIcon: {
+        padding: 8,
+        paddingRight: 0
+    },
+    searchInput: {
+        height: 30,
+        padding: 8,
+        flex: 1
     }
 });
 
